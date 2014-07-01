@@ -2,14 +2,21 @@ var EventEmitter = require('events').EventEmitter;
 var rfs = require('fs');
 var path = require('path');
 
+var defaultNonFatalErrors = {
+  'ENOENT': true,
+  'EPERM': true,
+  'ENOTDIR': true,
+};
+
 module.exports = function walk (dir, opts, emitter, dstat) {
     if (!opts) opts = {};
     var fdir = opts._original || dir;
     opts._original = undefined;
     var fs = opts.fs || rfs;
+    var nonFatalErrors = opts.nonFatalErrors || defaultNonFatalErrors;
     
     if (!emitter) {
-        emitter = new EventEmitter;
+        emitter = new EventEmitter();
         emitter.stop = function () {
             emitter._stopped = true;
             emitter.emit('stop');
@@ -30,14 +37,14 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     }
     else fs.lstat(dir, function onstat (err, stat) {
         if (emitter._stopped) return;
-        if (err) return finish();
+        if (err) return handleError(err);
         emitter._seen[stat.ino || dir] = true;
         
         if (stat.isSymbolicLink() && opts.followSymlinks) {
             emitter.emit('link', fdir, stat);
             fs.readlink(dir, function (err, rfile) {
                 if (emitter._stopped) return;
-                if (err) return finish();
+                if (err) return handleError(err);
                 var file_ = path.resolve(dir, rfile);
                 emitter.emit('readlink', fdir, file_);
                 fs.lstat(file_, onstat);
@@ -62,9 +69,30 @@ module.exports = function walk (dir, opts, emitter, dstat) {
             emitter.emit('path', fdir, stat);
             finish();
         }
+
+        function handleError(err) {
+            if (nonFatalErrors[err.code]) {
+                finish();
+            }
+            else {
+                emitter._stopped = true;
+                emitter._seen = null;
+                emitter.emit('error', err);
+            }
+        }
     });
     
     return emitter;
+
+    function handleError(err) {
+        if (nonFatalErrors[err.code]) {
+            check();
+        } else {
+            emitter._stopped = true;
+            emitter._seen = null;
+            emitter.emit('error', err);
+        }
+    }
     
     function check () {
         if (-- emitter._pending === 0) finish();
@@ -77,7 +105,7 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     
     function onreaddir (err, files) {
         if (emitter._stopped) return;
-        if (err) return check();
+        if (err) return handleError(err);
         
         files.forEach(function (rfile) {
             emitter._pending ++;
@@ -85,7 +113,7 @@ module.exports = function walk (dir, opts, emitter, dstat) {
             
             fs.lstat(file, function (err, stat) {
                 if (emitter._stopped) return;
-                if (err) check()
+                if (err) handleError(err);
                 else onstat(file, stat)
             });
         });
@@ -106,13 +134,13 @@ module.exports = function walk (dir, opts, emitter, dstat) {
             
             fs.readlink(file, function (err, rfile) {
                 if (emitter._stopped) return;
-                if (err) return check();
+                if (err) return handleError(err);
                 var file_ = path.resolve(path.dirname(file), rfile);
                 
                 emitter.emit('readlink', file, file_);
                 fs.lstat(file_, function (err, stat_) {
                     if (emitter._stopped) return;
-                    if (err) return check();
+                    if (err) return handleError(err);
                     
                     emitter._pending ++;
                     onstat(file_, stat_, file);

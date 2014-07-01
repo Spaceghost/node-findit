@@ -50,6 +50,16 @@ implementation with `opts.fs`. `opts.fs` should implement:
 * `opts.fs.lstat(dir, cb)`
 * `opts.fs.readlink(dir, cb)` - optional if your stat objects from
 `opts.fs.lstat` never return true for `stat.isSymbolicLink()`
+* `opts.nonFatalErrors` - object which represents which errors to ignore.
+  Defaults to:
+
+  ```js
+  {
+    'ENOENT': true,
+    'EPERM': true,
+    'ENOTDIR': true,
+  }
+  ```
 
 ## finder.stop()
 
@@ -57,6 +67,10 @@ Stop the traversal. A `"stop"` event will fire and then no more events will
 fire.
 
 # events
+
+## finder.on('error', function (err) {})
+
+Fires when a fatal error occurs during the walk.
 
 ## finder.on('path', function (file, stat) {})
 
@@ -83,8 +97,8 @@ Every time a symlink is read when `opts.followSymlinks` is on, this event fires.
 
 ## finder.on('end', function () {})
 
-When the recursive walk is complete unless `finder.stop()` was called, this
-event fires.
+When the recursive walk is complete unless `finder.stop()` was called or a
+fatal error occurred, this event fires.
 
 ## finder.on('stop', function () {})
 
