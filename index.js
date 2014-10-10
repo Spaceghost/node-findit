@@ -6,7 +6,7 @@ module.exports = findit;
 
 function findit(basedir, opts) {
   opts = opts || {};
-  var followSymlinks = (opts.followSymlinks == null) ? true : !!opts.followSymlinks;
+  var followSymlinks = !!opts.followSymlinks;
   var myFs = opts.fs || fs;
   var emitter = new EventEmitter();
   var stopped = false;
@@ -17,7 +17,7 @@ function findit(basedir, opts) {
   walkPath(basedir);
   return emitter;
 
-  function recursiveReadDir(basedir) {
+  function recursiveReadDir(basedir, linkPath) {
     pendStart();
     myFs.readdir(basedir, function(err, entries) {
       if (stopped) return;
@@ -27,21 +27,15 @@ function findit(basedir, opts) {
         return;
       }
       entries.forEach(function(entry) {
-        walkPath(path.join(basedir, entry));
+        var fullPath = path.join(basedir, entry);
+        var fullLinkPath = linkPath && path.join(linkPath, entry);
+        walkPath(fullPath, fullLinkPath);
       });
       pendEnd();
     });
   }
 
-  function walkPath(fullPath) {
-    if (seen[fullPath]) {
-      var err = new Error("file system loop detected");
-      err.code = 'ELOOP';
-      handleError(err, fullPath);
-      return;
-    }
-    seen[fullPath] = true;
-
+  function walkPath(fullPath, linkPath) {
     pendStart();
     myFs.lstat(fullPath, function(err, stats) {
       if (stopped) return;
@@ -50,32 +44,44 @@ function findit(basedir, opts) {
         pendEnd();
         return;
       }
-      emitter.emit('path', fullPath, stats);
+      emitter.emit('path', fullPath, stats, linkPath);
       if (stats.isDirectory()) {
-        emitter.emit('directory', fullPath, stats, stop);
-        recursiveReadDir(fullPath);
+        if (seen[fullPath]) {
+          err = new Error("file system loop detected");
+          err.code = 'ELOOP';
+          handleError(err, fullPath);
+          pendEnd();
+          return;
+        }
+        seen[fullPath] = true;
+
+        emitter.emit('directory', fullPath, stats, stop, linkPath);
+        recursiveReadDir(fullPath, linkPath);
       } else if (stats.isFile()) {
-        emitter.emit('file', fullPath, stats);
+        if (!seen[fullPath]) {
+          seen[fullPath] = true;
+          emitter.emit('file', fullPath, stats, linkPath);
+        }
       } else if (stats.isSymbolicLink()) {
-        emitter.emit('link', fullPath, stats);
+        emitter.emit('link', fullPath, stats, linkPath);
         if (followSymlinks) recursiveReadLink(fullPath);
       }
       pendEnd();
     });
   }
 
-  function recursiveReadLink(fullPath) {
+  function recursiveReadLink(linkPath) {
     pendStart();
-    myFs.readlink(fullPath, function(err, linkString) {
+    myFs.readlink(linkPath, function(err, linkString) {
       if (stopped) return;
       if (err) {
-        handleError(err, fullPath);
+        handleError(err, linkPath);
         pendEnd();
         return;
       }
-      var linkPath = path.join(path.dirname(fullPath), linkString);
-      emitter.emit('readlink', fullPath, linkPath);
-      walkPath(linkPath);
+      var fullPath = path.join(path.dirname(linkPath), linkString);
+      emitter.emit('readlink', linkPath, fullPath);
+      walkPath(fullPath, linkPath);
       pendEnd();
     });
   }
