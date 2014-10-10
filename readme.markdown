@@ -58,15 +58,19 @@ fire.
 
 # events
 
-## finder.on('path', function (file, stat) {})
+## finder.on('path', function (file, stat, linkPath) {})
 
 For each file, directory, and symlink `file`, this event fires.
 
-## finder.on('file', function (file, stat) {})
+If `followSymlinks` is `true`, then `linkPath` will be defined when `file`
+was found via a symlink. In this situation, `linkPath` is the path including
+the symlink; `file` is the resolved actual location on disk.
+
+## finder.on('file', function (file, stat, linkPath) {})
 
 For each file, this event fires.
 
-## finder.on('directory', function (dir, stat, stop) {})
+## finder.on('directory', function (dir, stat, stop, linkPath) {})
 
 For each directory, this event fires with the path `dir`.
 
