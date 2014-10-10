@@ -55,15 +55,16 @@ test('links', function (t) {
         t.end();
     }
 });
-
 test('follow links', function (t) {
     helper(t, __dirname + '/symlinks/dir1', { followSymlinks: true }, done);
     
     function done (data) {
-        t.equal(data.errors.length, 1);
+        t.equal(data.errors.length, 2);
         t.equal(
-            data.errors[0].path, __dirname
-            + '/symlinks/dir1/does-not-exist'
+            data.errors[0].path, __dirname + '/symlinks/dir1/does-not-exist'
+        );
+        t.equal(
+            data.errors[1].path, __dirname + '/symlinks/dir1'
         );
         
         t.deepEqual(data.symlinks, [
@@ -71,7 +72,7 @@ test('follow links', function (t) {
             'link-to-file'
         ]);
         t.deepEqual(data.files, ['file', 'file1', 'file2']);
-        t.deepEqual(data.dirs, [ 'dir1', 'link-to-dir2' ]);
+        t.deepEqual(data.dirs, [ 'dir1', 'dir2' ]);
         t.end();
     }
 });
