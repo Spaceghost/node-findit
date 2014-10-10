@@ -36,14 +36,6 @@ function findit(basedir, opts) {
   }
 
   function walkPath(fullPath, linkPath) {
-    if (seen[fullPath]) {
-      var err = new Error("file system loop detected");
-      err.code = 'ELOOP';
-      handleError(err, fullPath);
-      return;
-    }
-    seen[fullPath] = true;
-
     pendStart();
     myFs.lstat(fullPath, function(err, stats) {
       if (stopped) return;
@@ -54,10 +46,22 @@ function findit(basedir, opts) {
       }
       emitter.emit('path', fullPath, stats, linkPath);
       if (stats.isDirectory()) {
+        if (seen[fullPath]) {
+          err = new Error("file system loop detected");
+          err.code = 'ELOOP';
+          handleError(err, fullPath);
+          pendEnd();
+          return;
+        }
+        seen[fullPath] = true;
+
         emitter.emit('directory', fullPath, stats, stop, linkPath);
         recursiveReadDir(fullPath, linkPath);
       } else if (stats.isFile()) {
-        emitter.emit('file', fullPath, stats, linkPath);
+        if (!seen[fullPath]) {
+          seen[fullPath] = true;
+          emitter.emit('file', fullPath, stats, linkPath);
+        }
       } else if (stats.isSymbolicLink()) {
         emitter.emit('link', fullPath, stats, linkPath);
         if (followSymlinks) recursiveReadLink(fullPath);
