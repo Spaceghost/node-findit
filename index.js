@@ -45,6 +45,7 @@ function findit(basedir, opts) {
         return;
       }
       emitter.emit('path', fullPath, stats, linkPath);
+      var dirStopped = false;
       if (stats.isDirectory()) {
         if (seen[fullPath]) {
           err = new Error("file system loop detected");
@@ -55,8 +56,8 @@ function findit(basedir, opts) {
         }
         seen[fullPath] = true;
 
-        emitter.emit('directory', fullPath, stats, stop, linkPath);
-        recursiveReadDir(fullPath, linkPath);
+        emitter.emit('directory', fullPath, stats, stopDir, linkPath);
+        if (!dirStopped) recursiveReadDir(fullPath, linkPath);
       } else if (stats.isFile()) {
         if (!seen[fullPath]) {
           seen[fullPath] = true;
@@ -67,6 +68,10 @@ function findit(basedir, opts) {
         if (followSymlinks) recursiveReadLink(fullPath);
       }
       pendEnd();
+
+      function stopDir() {
+        dirStopped = true;
+      }
     });
   }
 
