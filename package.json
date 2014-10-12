@@ -23,5 +23,8 @@
     "traversal"
   ],
   "author": "Andrew Kelley <superjoe30@gmail.com>",
+  "engines": {
+    "node": ">=0.8.22"
+  },
   "license": "MIT"
 }
