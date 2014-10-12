@@ -22,10 +22,6 @@
     "tree",
     "traversal"
   ],
-  "author": {
-    "name": "James Halliday",
-    "email": "mail@substack.net",
-    "url": "http://substack.net"
-  },
+  "author": "Andrew Kelley <superjoe30@gmail.com>",
   "license": "MIT"
 }

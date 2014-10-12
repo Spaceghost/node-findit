@@ -2,7 +2,25 @@
 
 Recursively walk directory trees. Think `/usr/bin/find`.
 
-[![build status](https://secure.travis-ci.org/substack/node-findit.png)](http://travis-ci.org/substack/node-findit)
+[![build status](https://secure.travis-ci.org/andrewrk/node-findit.png)](http://travis-ci.org/andrewrk/node-findit)
+
+## Why the fork?
+
+There is a [pull request](https://github.com/substack/node-findit/pull/34) to
+merge this project back into findit.
+
+The pull request fixes every open issue in findit, and it completely rewrites
+the code from the ground up.
+
+It also adds an additional feature regarding symlinks.
+
+I would love for substack to merge the pull request, but realistically it might
+not happen, and this code is objectively cleaner, more robust, and fixes
+several critical issues.
+
+I recommend depending on this module rather than the original findit. If the
+pull request is merged, however, I will add a deprecation notice to this module
+and happily hand the maintainer hat back to substack.
 
 # example
 
@@ -28,10 +46,10 @@ finder.on('link', function (link, stat) {
 # methods
 
 ``` js
-var find = require('findit')
+var findit = require('findit2')
 ```
 
-## var finder = find(basedir, opts)
+## var finder = findit(basedir, opts)
 
 Return an event emitter `finder` that performs a recursive walk starting at
 `basedir`.
@@ -106,9 +124,5 @@ You can always get the source of the error by checking `err.path`.
 With [npm](https://npmjs.org) do:
 
 ```
-npm install findit
+npm install findit2
 ```
-
-# license
-
-MIT
