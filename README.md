@@ -25,16 +25,16 @@ and happily hand the maintainer hat back to substack.
 # example
 
 ``` js
-var finder = require('findit')(process.argv[2] || '.');
+var finder = require('findit2')(process.argv[2] || '.');
 var path = require('path');
 
-finder.on('directory', function (dir, stat, stop) {
+finder.on('directory', function (dir, stat, stop, linkPath) {
     var base = path.basename(dir);
     if (base === '.git' || base === 'node_modules') stop()
     else console.log(dir + '/')
 });
 
-finder.on('file', function (file, stat) {
+finder.on('file', function (file, stat, linkPath) {
     console.log(file);
 });
 
