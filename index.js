@@ -84,7 +84,7 @@ function findit(basedir, opts) {
         pendEnd();
         return;
       }
-      var fullPath = path.join(path.dirname(linkPath), linkString);
+      var fullPath = path.resolve(path.dirname(linkPath), linkString);
       emitter.emit('readlink', linkPath, fullPath);
       walkPath(fullPath, linkPath);
       pendEnd();
