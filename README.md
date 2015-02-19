@@ -2,8 +2,6 @@
 
 Recursively walk directory trees. Think `/usr/bin/find`.
 
-[![build status](https://secure.travis-ci.org/andrewrk/node-findit.png)](http://travis-ci.org/andrewrk/node-findit)
-
 ## Why the fork?
 
 There is a [pull request](https://github.com/substack/node-findit/pull/34) to
