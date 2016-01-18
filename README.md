@@ -124,3 +124,11 @@ With [npm](https://npmjs.org) do:
 ```
 npm install findit2
 ```
+
+# differences in behavior to substack/node-findit
+
+The `findit` module will not emit a 'file/directory/path' event if it shares
+an inode number (i.e. is a hardlink to) with an file/directory for which an
+event has already been emitted. `findit2` differs in that inode number is
+not considered. See issue #2 for details -- include sample code for re-adding
+this behavior if you require it.
